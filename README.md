@@ -3,7 +3,7 @@
 YonexAnh Telegram Drive is a personal desktop app that turns your Telegram account into a practical cloud-drive workspace. It uses Telegram Saved Messages and private Telegram channels as storage locations, then adds a native file-manager experience on top with folders, previews, streaming, transfers, search, sync, and account-aware UI.
 
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue)
-![Version](https://img.shields.io/badge/version-1.2.2-2dd4bf)
+![Version](https://img.shields.io/badge/version-1.2.3-2dd4bf)
 ![Tauri](https://img.shields.io/badge/Tauri-2.x-24C8DB)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 
@@ -22,6 +22,7 @@ The app connects directly to Telegram through your own API credentials. Credenti
 - **Multi-account switcher**: add multiple Telegram accounts, keep separate local sessions, and switch accounts quickly from the sidebar.
 - **Large photo performance pass**: thumbnails now use cached local files and Telegram thumbnail media instead of full-size base64 images, with request throttling to keep big folders responsive.
 - **Image preview hotfix**: local preview cache files are now served through Tauri's asset protocol, so full image preview works after the large-photo optimization.
+- **Telegram-playable media uploads**: uploaded videos are sent as streamable Telegram video documents instead of forced generic files; uploaded audio is sent as playable audio media.
 - **New app logo and icon set**: refreshed Telegram-like paper-plane drive identity across the UI and generated app icons.
 - **Automatic session restore**: the app checks existing local Telegram sessions on launch and opens the dashboard when possible.
 - **Real drag and drop upload**: file drops from the desktop are queued into the active Telegram folder.
@@ -49,6 +50,7 @@ The app connects directly to Telegram through your own API credentials. Credenti
 - **Virtualized Large Folders**: handle large folders without rendering every row at once.
 - **Image Thumbnails**: preview supported images inline.
 - **File Preview**: open image previews, PDFs, audio, and video without manually downloading first.
+- **Telegram-Playable Uploads**: upload videos as streamable Telegram media so Telegram clients can play supported videos inline instead of showing them only as generic files.
 - **Efficient Image Loading**: image grids use cached thumbnail files with limited concurrent requests, while preview avoids base64 conversion for large images.
 - **PDF Viewer**: built-in PDF viewing with page navigation.
 - **Advanced Search and Filters**: filter by type, tag, size, date, and favorites.
@@ -64,7 +66,7 @@ The app connects directly to Telegram through your own API credentials. Credenti
 
 ## Screenshots
 
-Screenshots are captured from v1.2.2 with demo files for documentation.
+Screenshots are captured from v1.2.3 with demo files for documentation.
 
 <table>
   <tr>

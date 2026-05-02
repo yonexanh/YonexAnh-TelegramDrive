@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.3] - 2026-05-03
+
+### Changed
+
+- Upload video files as Telegram media documents with streaming enabled instead of forcing them to generic file attachments.
+- Upload audio files as playable Telegram audio media while keeping other file types as regular drive files.
+
+---
+
 ## [1.2.2] - 2026-05-02
 
 ### Fixed

@@ -1,13 +1,61 @@
 use tauri::{Emitter, Manager, State};
-use grammers_client::types::{Media, Peer};
+use grammers_client::types::{Attribute, Media, Peer};
 use grammers_client::InputMessage;
 use grammers_tl_types as tl;
+use std::time::Duration;
 use crate::TelegramState;
 use crate::models::{FolderMetadata, FileMetadata};
 use crate::bandwidth::BandwidthManager;
 use crate::commands::utils::{resolve_peer, map_error};
 
 const METADATA_BACKUP_MAX_BYTES: u64 = 25 * 1024 * 1024;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum UploadMediaKind {
+    File,
+    Video,
+    Audio,
+}
+
+fn file_extension_lower(path: &str) -> Option<String> {
+    std::path::Path::new(path)
+        .extension()
+        .map(|ext| ext.to_string_lossy().to_ascii_lowercase())
+}
+
+fn classify_upload_media(path: &str) -> UploadMediaKind {
+    match file_extension_lower(path).as_deref() {
+        Some("mp4" | "m4v" | "mov" | "webm" | "mkv" | "avi" | "ogg") => UploadMediaKind::Video,
+        Some("mp3" | "wav" | "aac" | "flac" | "m4a" | "opus") => UploadMediaKind::Audio,
+        _ => UploadMediaKind::File,
+    }
+}
+
+fn upload_mime_type(path: &str, kind: UploadMediaKind) -> Option<&'static str> {
+    match (kind, file_extension_lower(path).as_deref()) {
+        (UploadMediaKind::Video, Some("mp4")) => Some("video/mp4"),
+        (UploadMediaKind::Video, Some("m4v")) => Some("video/x-m4v"),
+        (UploadMediaKind::Video, Some("mov")) => Some("video/quicktime"),
+        (UploadMediaKind::Video, Some("webm")) => Some("video/webm"),
+        (UploadMediaKind::Video, Some("mkv")) => Some("video/x-matroska"),
+        (UploadMediaKind::Video, Some("avi")) => Some("video/x-msvideo"),
+        (UploadMediaKind::Video, Some("ogg")) => Some("video/ogg"),
+        (UploadMediaKind::Audio, Some("mp3")) => Some("audio/mpeg"),
+        (UploadMediaKind::Audio, Some("wav")) => Some("audio/wav"),
+        (UploadMediaKind::Audio, Some("aac")) => Some("audio/aac"),
+        (UploadMediaKind::Audio, Some("flac")) => Some("audio/flac"),
+        (UploadMediaKind::Audio, Some("m4a")) => Some("audio/mp4"),
+        (UploadMediaKind::Audio, Some("opus")) => Some("audio/ogg"),
+        _ => None,
+    }
+}
+
+fn audio_title_from_path(path: &str) -> Option<String> {
+    std::path::Path::new(path)
+        .file_stem()
+        .map(|stem| stem.to_string_lossy().to_string())
+        .filter(|title| !title.trim().is_empty())
+}
 
 #[derive(Clone, serde::Serialize)]
 pub struct LocalFileInfo {
@@ -283,7 +331,31 @@ pub async fn cmd_upload_file(
     }).await.map_err(|e| format!("Task join error: {}", e))?
       .map_err(map_error)?;
 
-    let message = InputMessage::new().text("").file(uploaded_file);
+    let media_kind = classify_upload_media(&path);
+    let mut message_builder = InputMessage::new().text("");
+    if let Some(mime_type) = upload_mime_type(&path, media_kind) {
+        message_builder = message_builder.mime_type(mime_type);
+    }
+
+    let message = match media_kind {
+        UploadMediaKind::Video => message_builder
+            .document(uploaded_file)
+            .attribute(Attribute::Video {
+                round_message: false,
+                supports_streaming: true,
+                duration: Duration::from_secs(0),
+                w: 0,
+                h: 0,
+            }),
+        UploadMediaKind::Audio => message_builder
+            .document(uploaded_file)
+            .attribute(Attribute::Audio {
+                duration: Duration::from_secs(0),
+                title: audio_title_from_path(&path),
+                performer: None,
+            }),
+        UploadMediaKind::File => message_builder.file(uploaded_file),
+    };
 
     let peer = resolve_peer(&client, folder_id).await?;
 
