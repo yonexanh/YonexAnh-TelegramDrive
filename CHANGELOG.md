@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.1] - 2026-05-02
+
+### Performance
+
+- Optimized large image folders by loading Telegram thumbnail media instead of downloading full image files for grid thumbnails.
+- Changed thumbnail and preview rendering to use cached local file paths instead of base64 data URLs, reducing memory pressure and CPU work.
+- Added frontend thumbnail request throttling and duplicate-request sharing so only a small number of thumbnails load at once.
+- Limited preview prefetch to small images and removed card layout animation that caused extra reflow in large grids.
+
+---
+
 ## [1.2.0] - 2026-05-02
 
 ### Added

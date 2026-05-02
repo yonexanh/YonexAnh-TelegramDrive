@@ -9,7 +9,7 @@
     }
   },
   "productName": "Telegram Drive",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "identifier": "com.yonexanh.telegramdrive",
   "build": {
     "beforeDevCommand": "npm run dev",

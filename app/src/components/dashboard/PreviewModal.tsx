@@ -7,6 +7,7 @@ import { isImageFile } from '../../utils';
 
 const PREVIEW_CACHE_TTL_MS = 5 * 60 * 1000;
 const PREVIEW_CACHE_MAX_ITEMS = 8;
+const PREVIEW_PREFETCH_MAX_BYTES = 8 * 1024 * 1024;
 
 type PreviewCacheValue = {
     src: string;
@@ -50,7 +51,11 @@ const forgetPreview = (key: string) => {
     previewCache.delete(key);
 };
 
-const isSafeToPrefetch = (name: string) => isImageFile(name);
+const isSafeToPrefetch = (file: TelegramFile) => (
+    isImageFile(file.originalName || file.name) &&
+    (file.size || 0) > 0 &&
+    file.size <= PREVIEW_PREFETCH_MAX_BYTES
+);
 
 interface PreviewModalProps {
     file: TelegramFile;
@@ -125,7 +130,7 @@ export function PreviewModal({ file, onClose, onNext, onPrev, currentIndex, tota
     }, [file, activeFolderId, reloadNonce]);
 
     useEffect(() => {
-        const candidates = [nextFile, prevFile].filter((f): f is TelegramFile => !!f && isSafeToPrefetch(f.name));
+        const candidates = [nextFile, prevFile].filter((f): f is TelegramFile => !!f && isSafeToPrefetch(f));
 
         candidates.forEach((candidate) => {
             const key = getPreviewCacheKey(candidate.id, activeFolderId);
@@ -237,6 +242,7 @@ export function PreviewModal({ file, onClose, onNext, onPrev, currentIndex, tota
                                 src={src}
                                 className="max-w-[calc(100vw-7rem)] max-h-[calc(100vh-8rem)] object-contain rounded-lg shadow-2xl bg-black border border-white/10"
                                 alt="Preview"
+                                decoding="async"
                                 onError={() => {
                                     const key = getPreviewCacheKey(file.id, activeFolderId);
                                     forgetPreview(key);

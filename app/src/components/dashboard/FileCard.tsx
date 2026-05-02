@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Download, Eye, Folder, Star, Trash2 } from 'lucide-react';
-import { invoke } from '@tauri-apps/api/core';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { TelegramFile } from '../../types';
 import { FileTypeIcon } from '../FileTypeIcon';
 
@@ -27,6 +27,57 @@ function isImageFile(filename: string): boolean {
     return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext);
 }
 
+const THUMBNAIL_CONCURRENCY = 4;
+
+type ThumbnailTask = {
+    messageId: number;
+    folderId: number | null;
+    resolve: (value: string) => void;
+    reject: (error: unknown) => void;
+};
+
+let activeThumbnailRequests = 0;
+const thumbnailQueue: ThumbnailTask[] = [];
+const thumbnailRequestCache = new Map<string, Promise<string>>();
+
+const pumpThumbnailQueue = () => {
+    while (activeThumbnailRequests < THUMBNAIL_CONCURRENCY && thumbnailQueue.length > 0) {
+        const task = thumbnailQueue.shift();
+        if (!task) return;
+
+        activeThumbnailRequests += 1;
+        invoke<string>('cmd_get_thumbnail', {
+            messageId: task.messageId,
+            folderId: task.folderId
+        })
+            .then(task.resolve)
+            .catch(task.reject)
+            .finally(() => {
+                activeThumbnailRequests -= 1;
+                pumpThumbnailQueue();
+            });
+    }
+};
+
+const queueThumbnailRequest = (messageId: number, folderId: number | null) => {
+    const key = `${folderId ?? 'home'}:${messageId}`;
+    const cached = thumbnailRequestCache.get(key);
+    if (cached) return cached;
+
+    const request = new Promise<string>((resolve, reject) => {
+        thumbnailQueue.push({ messageId, folderId, resolve, reject });
+        pumpThumbnailQueue();
+    });
+    thumbnailRequestCache.set(key, request);
+    request.then((value) => {
+        if (!value) thumbnailRequestCache.delete(key);
+    }).catch(() => {
+        thumbnailRequestCache.delete(key);
+    });
+
+    return request;
+};
+
 export function FileCard({ file, onDelete, onDownload, onToggleFavorite, onPreview, isSelected, onClick, onContextMenu, onDrop, onDragStart, onDragEnd, activeFolderId, height }: FileCardProps) {
     const isFolder = file.type === 'folder';
     const [isDragOver, setIsDragOver] = useState(false);
@@ -35,17 +86,17 @@ export function FileCard({ file, onDelete, onDownload, onToggleFavorite, onPrevi
 
     // Lazy load thumbnail for image files
     useEffect(() => {
-        if (isFolder || !isImageFile(file.originalName || file.name)) return;
+        const filename = file.originalName || file.name;
+        setThumbnail(null);
+
+        if (isFolder || !isImageFile(filename)) return;
 
         let cancelled = false;
         setThumbnailLoading(true);
 
-        invoke<string>('cmd_get_thumbnail', {
-            messageId: file.id,
-            folderId: activeFolderId
-        }).then((result) => {
+        queueThumbnailRequest(file.id, activeFolderId ?? null).then((result) => {
             if (!cancelled && result) {
-                setThumbnail(result);
+                setThumbnail(result.startsWith('data:') ? result : convertFileSrc(result));
             }
         }).catch(() => {
             // Silently fail - will show icon instead
@@ -85,7 +136,6 @@ export function FileCard({ file, onDelete, onDownload, onToggleFavorite, onPrevi
             }}
         >
             <motion.div
-                layout
                 draggable={!isFolder}
                 onDragStart={(e: any) => {
                     if (onDragStart) onDragStart(file.id);
@@ -108,6 +158,8 @@ export function FileCard({ file, onDelete, onDownload, onToggleFavorite, onPrevi
                             src={thumbnail}
                             alt={file.name}
                             className="w-full h-full object-cover"
+                            loading="lazy"
+                            decoding="async"
                             onError={() => setThumbnail(null)}
                         />
                         {/* Gradient overlay for text readability */}

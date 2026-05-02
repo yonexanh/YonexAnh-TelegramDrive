@@ -1,15 +1,18 @@
 use tauri::State;
 use tauri::Manager;
 use grammers_client::types::Media;
-use base64::{Engine as _, engine::general_purpose};
+use grammers_client::types::photo_sizes::PhotoSize;
 use crate::TelegramState;
 use crate::bandwidth::BandwidthManager;
 use crate::commands::utils::resolve_peer;
 
 const PREVIEW_CACHE_MAX_FILES: usize = 30;
 const PREVIEW_CACHE_MAX_TOTAL_BYTES: u64 = 80 * 1024 * 1024;
+const THUMBNAIL_CACHE_MAX_FILES: usize = 500;
+const THUMBNAIL_CACHE_MAX_TOTAL_BYTES: u64 = 160 * 1024 * 1024;
+const TARGET_THUMBNAIL_MAX_BYTES: usize = 512 * 1024;
 
-fn prune_preview_cache(cache_dir: &std::path::Path) {
+fn prune_cache(cache_dir: &std::path::Path, max_files: usize, max_total_bytes: u64) {
     let read_dir = match std::fs::read_dir(cache_dir) {
         Ok(entries) => entries,
         Err(_) => return,
@@ -27,7 +30,7 @@ fn prune_preview_cache(cache_dir: &std::path::Path) {
     }
     files.sort_by_key(|(_, modified, _)| *modified);
     let mut total_bytes: u64 = files.iter().map(|(_, _, len)| *len).sum();
-    while files.len() > PREVIEW_CACHE_MAX_FILES || total_bytes > PREVIEW_CACHE_MAX_TOTAL_BYTES {
+    while files.len() > max_files || total_bytes > max_total_bytes {
         if let Some((path, _, len)) = files.first().cloned() {
             let _ = std::fs::remove_file(&path);
             total_bytes = total_bytes.saturating_sub(len);
@@ -36,6 +39,46 @@ fn prune_preview_cache(cache_dir: &std::path::Path) {
             break;
         }
     }
+}
+
+fn prune_preview_cache(cache_dir: &std::path::Path) {
+    prune_cache(cache_dir, PREVIEW_CACHE_MAX_FILES, PREVIEW_CACHE_MAX_TOTAL_BYTES);
+}
+
+fn prune_thumbnail_cache(cache_dir: &std::path::Path) {
+    prune_cache(cache_dir, THUMBNAIL_CACHE_MAX_FILES, THUMBNAIL_CACHE_MAX_TOTAL_BYTES);
+}
+
+fn folder_cache_key(folder_id: Option<i64>) -> String {
+    folder_id
+        .map(|id| id.to_string())
+        .unwrap_or_else(|| "home".to_string())
+}
+
+fn thumbnail_extension(thumb: &PhotoSize) -> &'static str {
+    match thumb {
+        PhotoSize::Path(_) => "svg",
+        _ => "jpg",
+    }
+}
+
+fn select_thumbnail(thumbs: Vec<PhotoSize>) -> Option<PhotoSize> {
+    let mut candidates: Vec<PhotoSize> = thumbs
+        .into_iter()
+        .filter(|thumb| {
+            thumb.size() > 0
+                && !matches!(thumb, PhotoSize::Empty(_) | PhotoSize::Path(_))
+        })
+        .collect();
+
+    candidates.sort_by_key(|thumb| thumb.size());
+
+    candidates
+        .iter()
+        .rev()
+        .find(|thumb| thumb.size() <= TARGET_THUMBNAIL_MAX_BYTES)
+        .cloned()
+        .or_else(|| candidates.first().cloned())
 }
 
 #[tauri::command]
@@ -93,9 +136,7 @@ pub async fn cmd_get_preview(
                 Media::Photo(_) => "jpg".to_string(),
                 _ => "bin".to_string(),
             };
-            let folder_key = folder_id
-                .map(|id| id.to_string())
-                .unwrap_or_else(|| "home".to_string());
+            let folder_key = folder_cache_key(folder_id);
             let save_path = cache_dir.join(format!("{}_{}.{}", folder_key, message_id, ext));
             let save_path_str = save_path.to_string_lossy().to_string();
 
@@ -128,28 +169,6 @@ pub async fn cmd_get_preview(
                 }
             };
             if file_ready {
-                let lower_ext = ext.to_lowercase();
-                if ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"].contains(&lower_ext.as_str()) {
-                    log::info!("Converting image to Base64...");
-                    match std::fs::read(&save_path) {
-                        Ok(bytes) => {
-                            let b64 = general_purpose::STANDARD.encode(&bytes);
-                            let mime = match lower_ext.as_str() {
-                                "png" => "image/png",
-                                "gif" => "image/gif",
-                                "webp" => "image/webp",
-                                "bmp" => "image/bmp",
-                                "svg" => "image/svg+xml",
-                                _ => "image/jpeg",
-                            };
-                            return Ok(format!("data:{};base64,{}", mime, b64));
-                        },
-                        Err(e) => {
-                            log::error!("Failed to read file for base64: {}", e);
-                            return Ok(save_path_str);
-                        }
-                    }
-                }
                 log::info!("Returning path preview: {}", save_path_str);
                 return Ok(save_path_str);
             }
@@ -174,48 +193,36 @@ pub async fn cmd_clean_cache(
 }
 
 /// Get a small thumbnail for inline display in file cards.
-/// Returns base64 data URL for images, empty string for non-image files.
-/// Uses same cache as cmd_get_preview for consistency.
+/// Returns a cached local file path, or empty string for files without Telegram thumbnails.
 #[tauri::command]
 pub async fn cmd_get_thumbnail(
     message_id: i32,
     folder_id: Option<i64>,
     app_handle: tauri::AppHandle,
     state: State<'_, TelegramState>,
+    bw_state: State<'_, BandwidthManager>,
 ) -> Result<String, String> {
-    // Check if thumbnail already in cache
     let cache_dir = app_handle
         .path()
-        .app_data_dir()
+        .app_cache_dir()
         .map_err(|e: tauri::Error| e.to_string())?
         .join("thumbnails");
     if !cache_dir.exists() {
         let _ = std::fs::create_dir_all(&cache_dir);
     }
+    prune_thumbnail_cache(&cache_dir);
 
-    // Check for any cached thumbnail for this message
-    // Look for existing cached file
+    let folder_key = folder_cache_key(folder_id);
+    let cache_prefix = format!("{}_{}.", folder_key, message_id);
     if let Ok(entries) = std::fs::read_dir(&cache_dir) {
         for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().to_string();
-            if name.starts_with(&format!("{}.", message_id)) {
-                // Found cached thumbnail, return as base64
-                if let Ok(bytes) = std::fs::read(entry.path()) {
-                    let ext = name.rsplit('.').next().unwrap_or("jpg");
-                    let mime = match ext {
-                        "png" => "image/png",
-                        "gif" => "image/gif",
-                        "webp" => "image/webp",
-                        _ => "image/jpeg",
-                    };
-                    let b64 = general_purpose::STANDARD.encode(&bytes);
-                    return Ok(format!("data:{};base64,{}", mime, b64));
-                }
+            if name.starts_with(&cache_prefix) {
+                return Ok(entry.path().to_string_lossy().to_string());
             }
         }
     }
 
-    // No cache, need to fetch from Telegram
     let client_opt = { state.client.lock().await.clone() };
     if client_opt.is_none() {
         return Ok("".to_string());
@@ -227,44 +234,29 @@ pub async fn cmd_get_thumbnail(
         .await.map_err(|e| e.to_string())?;
     if let Some(m) = messages.into_iter().flatten().next() {
         if let Some(media) = m.media() {
-            // Only get thumbnails for photos and documents with photo thumbnails
-            let (is_image, ext) = match &media {
-                Media::Photo(_) => (true, "jpg".to_string()),
-                Media::Document(d) => {
-                    let mime = d.mime_type().unwrap_or("");
-                    if mime.starts_with("image/") {
-                        let e = match mime {
-                            "image/png" => "png",
-                            "image/gif" => "gif",
-                            "image/webp" => "webp",
-                            _ => "jpg",
-                        };
-                        (true, e.to_string())
-                    } else {
-                        // Not an image, return empty - FileCard will show icon
-                        return Ok("".to_string());
-                    }
-                },
-                _ => return Ok("".to_string()),
+            let thumbs = match &media {
+                Media::Photo(photo) => photo.thumbs(),
+                Media::Document(document) => document.thumbs(),
+                _ => Vec::new(),
             };
 
-            if is_image {
-                // Get photo thumbnail (smallest size for speed)
-                let save_path = cache_dir.join(format!("{}.{}", message_id, ext));
+            if let Some(thumb) = select_thumbnail(thumbs) {
+                let size = thumb.size() as u64;
+                if bw_state.can_transfer(size).is_err() {
+                    return Ok("".to_string());
+                }
+                let save_path = cache_dir.join(format!(
+                    "{}_{}.{}",
+                    folder_key,
+                    message_id,
+                    thumbnail_extension(&thumb)
+                ));
                 let save_path_str = save_path.to_string_lossy().to_string();
 
-                // Download the thumbnail/photo
-                if client.download_media(&media, &save_path_str).await.is_ok() {
-                    if let Ok(bytes) = std::fs::read(&save_path) {
-                        let mime = match ext.as_str() {
-                            "png" => "image/png",
-                            "gif" => "image/gif",
-                            "webp" => "image/webp",
-                            _ => "image/jpeg",
-                        };
-                        let b64 = general_purpose::STANDARD.encode(&bytes);
-                        return Ok(format!("data:{};base64,{}", mime, b64));
-                    }
+                if client.download_media(&thumb, &save_path_str).await.is_ok() {
+                    bw_state.add_down(size);
+                    prune_thumbnail_cache(&cache_dir);
+                    return Ok(save_path_str);
                 }
             }
         }
