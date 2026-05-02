@@ -119,8 +119,8 @@ The app uses a local loopback OAuth callback and requests the `drive.file` scope
 ## Quick Start
 
 ```bash
-git clone https://github.com/yonexanh/CloneYA-TelegramDrive.git
-cd CloneYA-TelegramDrive/app
+git clone https://github.com/yonexanh/YonexAnh-TelegramDrive.git
+cd YonexAnh-TelegramDrive/app
 npm install
 npm run tauri dev
 ```
@@ -148,8 +148,8 @@ xcode-select --install
 Build commands:
 
 ```bash
-git clone https://github.com/yonexanh/CloneYA-TelegramDrive.git
-cd CloneYA-TelegramDrive/app
+git clone https://github.com/yonexanh/YonexAnh-TelegramDrive.git
+cd YonexAnh-TelegramDrive/app
 npm install
 npm run tauri build
 ```
@@ -182,8 +182,8 @@ Requirements:
 Build commands:
 
 ```powershell
-git clone https://github.com/yonexanh/CloneYA-TelegramDrive.git
-cd CloneYA-TelegramDrive\app
+git clone https://github.com/yonexanh/YonexAnh-TelegramDrive.git
+cd YonexAnh-TelegramDrive\app
 npm install
 npm run tauri build
 ```
@@ -215,8 +215,8 @@ xcode-select --install
 Lệnh build:
 
 ```bash
-git clone https://github.com/yonexanh/CloneYA-TelegramDrive.git
-cd CloneYA-TelegramDrive/app
+git clone https://github.com/yonexanh/YonexAnh-TelegramDrive.git
+cd YonexAnh-TelegramDrive/app
 npm install
 npm run tauri build
 ```
@@ -249,8 +249,8 @@ Yêu cầu:
 Lệnh build:
 
 ```powershell
-git clone https://github.com/yonexanh/CloneYA-TelegramDrive.git
-cd CloneYA-TelegramDrive\app
+git clone https://github.com/yonexanh/YonexAnh-TelegramDrive.git
+cd YonexAnh-TelegramDrive\app
 npm install
 npm run tauri build
 ```
@@ -297,4 +297,4 @@ npx --no-install tauri icon public/logo.svg
 
 ## Project Ownership
 
-This repository is maintained as a personal project by **YonexAnh** under the repository name **CloneYA-TelegramDrive**. The README, branding, and app features are written for this project and do not include donation sections or attribution blocks from another repository template.
+This repository is maintained as a personal project by **YonexAnh** under the repository name **YonexAnh-TelegramDrive**. The README, branding, and app features are written for this project and do not include donation sections or attribution blocks from another repository template.
