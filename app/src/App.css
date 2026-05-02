@@ -1,0 +1,290 @@
+@import "tailwindcss";
+
+/* stylelint-disable at-rule-no-unknown */
+/* Drive Console theme */
+@theme {
+  --color-telegram-bg: #101312;
+  --color-telegram-surface: #181d1b;
+  --color-telegram-primary: #2dd4bf;
+  --color-telegram-secondary: #f59e0b;
+  --color-telegram-text: #f7faf6;
+  --color-telegram-subtext: #9aa8a2;
+  --color-telegram-border: rgba(236, 245, 241, 0.12);
+  --color-telegram-hover: rgba(45, 212, 191, 0.08);
+}
+
+/* Light Theme Overrides */
+:root.light {
+  --color-telegram-bg: #f3f6f7;
+  --color-telegram-surface: #ffffff;
+  --color-telegram-primary: #0f766e;
+  --color-telegram-secondary: #b45309;
+  --color-telegram-text: #1f2933;
+  --color-telegram-subtext: #667085;
+  --color-telegram-border: rgba(20, 31, 36, 0.12);
+  --color-telegram-hover: rgba(15, 118, 110, 0.08);
+}
+
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--color-telegram-bg);
+  color: var(--color-telegram-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Auth screen gradient background */
+.auth-gradient {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(135deg, #101312 0%, #17231e 52%, #151922 100%);
+  background-size: 28px 28px, 28px 28px, auto;
+}
+
+:root.light .auth-gradient {
+  background:
+    linear-gradient(rgba(15, 118, 110, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 118, 110, 0.055) 1px, transparent 1px),
+    linear-gradient(135deg, #f7fafb 0%, #edf4f5 55%, #f5f7f1 100%);
+  background-size: 28px 28px, 28px 28px, auto;
+}
+
+/* Glassmorphism Utilities - Dark */
+.glass {
+  background: rgba(23, 33, 43, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:root.light .glass {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Auth-specific glass - works on gradient backgrounds in both themes */
+.auth-glass {
+  background: rgba(247, 250, 246, 0.06);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(247, 250, 246, 0.12);
+}
+
+:root.light .auth-glass {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(20, 31, 36, 0.12);
+  color: #1f2933;
+}
+
+/* Force dark text inside auth-glass in light mode */
+:root.light .auth-glass .text-white {
+  color: #1a1a1a;
+}
+
+:root.light .auth-glass .text-white\/60 {
+  color: rgba(26, 26, 26, 0.7);
+}
+
+:root.light .auth-glass .text-gray-400 {
+  color: #555;
+}
+
+:root.light .auth-glass .text-blue-200 {
+  color: #1e40af;
+}
+
+:root.light .auth-glass .placeholder-gray-600::placeholder {
+  color: #9ca3af;
+}
+
+:root.light .auth-glass input {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #1a1a1a;
+}
+
+/* Auth form icons - Direct overrides for maximum visibility */
+.auth-form-icon {
+  color: #ffffff !important;
+  /* Default (Dark Mode): Pure White */
+  opacity: 1 !important;
+  z-index: 20;
+}
+
+/* Light Mode Override */
+:root.light .auth-form-icon {
+  color: #000000 !important;
+  /* Light Mode: Pure Black */
+  opacity: 0.8 !important;
+}
+
+.glass-input {
+  background: rgba(16, 19, 18, 0.72);
+  border: 1px solid rgba(247, 250, 246, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+:root.light .glass-input {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(20, 31, 36, 0.14);
+}
+
+.console-panel {
+  background: color-mix(in srgb, var(--color-telegram-surface) 94%, transparent);
+  border: 1px solid var(--color-telegram-border);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
+}
+
+.command-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-telegram-border);
+  border-radius: 0.5rem;
+  background: var(--color-telegram-surface);
+  color: var(--color-telegram-text);
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.command-button:hover {
+  background: var(--color-telegram-hover);
+  border-color: color-mix(in srgb, var(--color-telegram-primary) 38%, var(--color-telegram-border));
+}
+
+.command-button:active {
+  transform: translateY(1px);
+}
+
+.metadata-pill {
+  border: 1px solid var(--color-telegram-border);
+  background: var(--color-telegram-hover);
+  color: var(--color-telegram-subtext);
+  border-radius: 999px;
+}
+
+/* Custom Scrollbar - Dark */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(36, 129, 204, 0.6);
+}
+
+/* Custom Scrollbar - Light */
+:root.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+:root.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(36, 129, 204, 0.5);
+}
+
+/* Progress Animation */
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(50%);
+  }
+
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-progress-indeterminate {
+  animation: progress-indeterminate 1.5s infinite linear;
+}
+
+/* Light mode specific overrides for common patterns */
+:root.light .bg-telegram-bg {
+  background-color: var(--color-telegram-bg);
+}
+
+:root.light .bg-telegram-surface {
+  background-color: var(--color-telegram-surface);
+}
+
+:root.light .border-white\/5,
+:root.light .border-white\/10 {
+  border-color: var(--color-telegram-border);
+}
+
+:root.light .bg-white\/5,
+:root.light .hover\:bg-white\/5:hover {
+  background-color: var(--color-telegram-hover);
+}
+
+:root.light .bg-white\/10,
+:root.light .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+:root.light .bg-black\/20,
+:root.light .bg-black\/30,
+:root.light .bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* File card action buttons - more visible in light mode */
+:root.light .file-action-btn {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  color: white !important;
+}
+
+:root.light .file-action-btn:hover {
+  background-color: var(--color-telegram-primary) !important;
+}
+
+/* Invert text colors for light mode where needed */
+:root.light .text-telegram-text {
+  color: var(--color-telegram-text);
+}
+
+:root.light .text-telegram-subtext {
+  color: var(--color-telegram-subtext);
+}
+
+/* Card shadows for light mode */
+:root.light .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Input styling for light mode */
+:root.light input,
+:root.light textarea {
+  background-color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #1a1a1a;
+}
+
+:root.light input::placeholder,
+:root.light textarea::placeholder {
+  color: #9ca3af;
+}
+
+:root.light input:focus,
+:root.light textarea:focus {
+  border-color: var(--color-telegram-primary);
+}
