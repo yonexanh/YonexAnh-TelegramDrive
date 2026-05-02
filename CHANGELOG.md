@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2] - 2026-05-02
+
+### Fixed
+
+- Fixed image preview rendering after the large-photo optimization by enabling Tauri's asset protocol for app cache files and allowing the local asset host in the image CSP.
+
+---
+
 ## [1.2.1] - 2026-05-02
 
 ### Performance
