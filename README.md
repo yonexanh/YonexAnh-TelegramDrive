@@ -1,6 +1,6 @@
-# CloneYA Telegram Drive
+# YonexAnh Telegram Drive
 
-CloneYA Telegram Drive is a personal desktop app that turns your Telegram account into a practical cloud-drive workspace. It uses Telegram Saved Messages and private Telegram channels as storage locations, then adds a native file-manager experience on top with folders, previews, streaming, transfers, search, sync, and account-aware UI.
+YonexAnh Telegram Drive is a personal desktop app that turns your Telegram account into a practical cloud-drive workspace. It uses Telegram Saved Messages and private Telegram channels as storage locations, then adds a native file-manager experience on top with folders, previews, streaming, transfers, search, sync, and account-aware UI.
 
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue)
 ![Version](https://img.shields.io/badge/version-1.1.9-2dd4bf)
@@ -11,7 +11,7 @@ CloneYA Telegram Drive is a personal desktop app that turns your Telegram accoun
 
 ## Overview
 
-Telegram already stores your files in the cloud, but the native Telegram clients are not designed like a file manager. CloneYA Telegram Drive provides a desktop interface for browsing, uploading, downloading, previewing, organizing, and streaming those files.
+Telegram already stores your files in the cloud, but the native Telegram clients are not designed like a file manager. YonexAnh Telegram Drive provides a desktop interface for browsing, uploading, downloading, previewing, organizing, and streaming those files.
 
 The app connects directly to Telegram through your own API credentials. Credentials, session files, local metadata, sync settings, and transfer queues stay on your machine.
 
@@ -105,7 +105,7 @@ Screenshots are captured from v1.1.9 with demo files for documentation.
 2. Log in with your Telegram phone number.
 3. Open **API development tools**.
 4. Create an app and copy the **API ID** and **API Hash**.
-5. Paste them into CloneYA Telegram Drive on first launch.
+5. Paste them into YonexAnh Telegram Drive on first launch.
 
 Your API credentials are stored locally by the desktop app.
 
@@ -120,7 +120,7 @@ Setup:
 3. Configure the OAuth consent screen for your Google account.
 4. Create an OAuth Client ID with application type **Desktop app**.
 5. Copy the Client ID.
-6. In CloneYA Telegram Drive, open **Google Drive** from the Tools section, paste the Client ID, and connect.
+6. In YonexAnh Telegram Drive, open **Google Drive** from the Tools section, paste the Client ID, and connect.
 
 The app uses a local loopback OAuth callback and requests the `drive.file` scope so it can create or access files it manages in your Google Drive. Tokens are stored locally on your device.
 

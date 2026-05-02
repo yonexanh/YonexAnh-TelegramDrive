@@ -56,7 +56,7 @@ const DEFAULT_GOOGLE_DRIVE_SETTINGS: GoogleDriveSettings = {
     email: null,
     name: null,
     folderId: null,
-    folderName: 'CloneYA Telegram Drive Backup',
+    folderName: 'YonexAnh Telegram Drive Backup',
     lastBackupAt: null,
     lastBackupResult: null,
 };
