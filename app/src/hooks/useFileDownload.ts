@@ -17,6 +17,13 @@ export function useFileDownload(store: Store | null) {
     const [initialized, setInitialized] = useState(false);
     const cancelledRef = useRef<Set<string>>(new Set());
 
+    useEffect(() => {
+        cancelledRef.current.clear();
+        setDownloadQueue([]);
+        setProcessing(false);
+        setInitialized(false);
+    }, [store]);
+
     // Listen for progress events from Rust
     useEffect(() => {
         let unlisten: UnlistenFn | undefined;

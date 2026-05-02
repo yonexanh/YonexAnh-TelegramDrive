@@ -26,6 +26,14 @@ export function useLocalSync(
     const [lastResult, setLastResult] = useState<string>('Not run yet');
 
     useEffect(() => {
+        setSettings(DEFAULT_SYNC_SETTINGS);
+        setSyncState({});
+        setLoaded(false);
+        setIsRunning(false);
+        setLastResult('Not run yet');
+    }, [store]);
+
+    useEffect(() => {
         if (!store || loaded) return;
 
         Promise.all([

@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import { open } from '@tauri-apps/plugin-shell';
 import { LanguageToggle } from './LanguageToggle';
 import { useLanguage } from '../context/LanguageContext';
+import { AccountListResult } from '../types';
 
 type Step = "setup" | "phone" | "code" | "password";
 
@@ -37,7 +38,7 @@ function AuthQuickControls() {
     );
 }
 
-export function AuthWizard({ onLogin }: { onLogin: () => void }) {
+export function AuthWizard({ onLogin, onCancel }: { onLogin: () => void; onCancel?: () => void }) {
     const { t } = useLanguage();
     const isBrowser = typeof window !== 'undefined' && !('__TAURI_INTERNALS__' in window);
 
@@ -71,6 +72,7 @@ export function AuthWizard({ onLogin }: { onLogin: () => void }) {
     const [error, setError] = useState<string | null>(null);
     const [floodWait, setFloodWait] = useState<number | null>(null);
     const [showHelp, setShowHelp] = useState(false);
+    const [canReturnToAccounts, setCanReturnToAccounts] = useState(false);
 
 
     useEffect(() => {
@@ -95,12 +97,38 @@ export function AuthWizard({ onLogin }: { onLogin: () => void }) {
                     setApiId(savedId);
                     setApiHash(savedHash);
                 }
+
+                const accountList = await invoke<AccountListResult>('cmd_get_accounts').catch(() => null);
+                setCanReturnToAccounts((accountList?.accounts.length || 0) > 0);
             } catch {
                 // config not found, starting fresh
             }
         };
         initStore();
     }, []);
+
+    const handleReturnToAccounts = async () => {
+        if (!onCancel) return;
+        setLoading(true);
+        setError(null);
+        try {
+            const store = await load('config.json');
+            const savedId = await store.get<string>('api_id');
+            const apiIdValue = savedId ? parseInt(savedId, 10) : NaN;
+            if (!savedId || Number.isNaN(apiIdValue)) throw new Error(t('auth.apiIdNumber'));
+
+            const accountList = await invoke<AccountListResult>('cmd_get_accounts');
+            const targetAccountId = accountList.active_account_id || accountList.accounts[0]?.account_id;
+            if (targetAccountId) {
+                await invoke('cmd_switch_account', { accountId: targetAccountId, apiId: apiIdValue });
+            }
+            onCancel();
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const saveCredentials = async () => {
         try {
@@ -489,6 +517,17 @@ export function AuthWizard({ onLogin }: { onLogin: () => void }) {
                         <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 shrink-0" />
                         <p className="text-red-400 text-sm leading-snug">{error}</p>
                     </motion.div>
+                )}
+
+                {canReturnToAccounts && onCancel && (
+                    <button
+                        type="button"
+                        onClick={handleReturnToAccounts}
+                        disabled={loading}
+                        className="mt-5 w-full text-xs text-telegram-subtext hover:text-telegram-text transition-colors py-2 disabled:opacity-50"
+                    >
+                        {t('auth.backToAccounts')}
+                    </button>
                 )}
                 </div>
             </motion.div>

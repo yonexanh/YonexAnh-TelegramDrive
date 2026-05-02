@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { load } from "@tauri-apps/plugin-store";
@@ -24,6 +24,14 @@ function AppContent() {
   const { theme } = useTheme();
   const { t } = useLanguage();
   const { available, version, downloading, progress, downloadAndInstall, dismissUpdate } = useUpdateCheck();
+  const showAuth = useCallback(() => {
+    queryClient.clear();
+    setAuthState("auth");
+  }, []);
+  const showDashboard = useCallback(() => {
+    queryClient.clear();
+    setAuthState("dashboard");
+  }, []);
 
   useEffect(() => {
     if (!isTauri) {
@@ -80,9 +88,9 @@ function AppContent() {
           <p className="text-sm text-telegram-subtext">{t('common.checkingSession')}</p>
         </div>
       ) : authState === "dashboard" ? (
-        <Dashboard onLogout={() => setAuthState("auth")} />
+        <Dashboard onLogout={showAuth} onAddAccount={showAuth} />
       ) : (
-        <AuthWizard onLogin={() => setAuthState("dashboard")} />
+        <AuthWizard onLogin={showDashboard} onCancel={showDashboard} />
       )}
     </main>
   );

@@ -18,7 +18,7 @@ export function useFileOperations(
         try {
             const folderId = folderIdOverride === undefined ? activeFolderId : folderIdOverride;
             await invoke('cmd_delete_file', { messageId: id, folderId });
-            queryClient.invalidateQueries({ queryKey: ['files', folderId] });
+            queryClient.invalidateQueries({ queryKey: ['files'] });
             toast.success("File deleted");
             return true;
         } catch (e) {
@@ -46,7 +46,7 @@ export function useFileOperations(
             }
         }
         setSelectedIds([]);
-        queryClient.invalidateQueries({ queryKey: ['files', activeFolderId] });
+        queryClient.invalidateQueries({ queryKey: ['files'] });
         if (success > 0) toast.success(`Deleted ${success} files.`);
         if (fail > 0) toast.error(`Failed to delete ${fail} files.`);
         return deletedIds;
@@ -107,7 +107,7 @@ export function useFileOperations(
                 targetFolderId: targetFolderId
             });
             toast.success(`Moved ${selectedIds.length} files.`);
-            queryClient.invalidateQueries({ queryKey: ['files', sourceFolderId] });
+            queryClient.invalidateQueries({ queryKey: ['files'] });
             setSelectedIds([]);
             if (onSuccess) onSuccess();
         } catch {

@@ -49,6 +49,7 @@ pub fn run() {
                 login_token: Arc::new(Mutex::new(None)),
                 password_token: Arc::new(Mutex::new(None)),
                 api_id: Arc::new(Mutex::new(None)),
+                active_account_id: Arc::new(Mutex::new(None)),
                 runner_shutdown: Arc::new(std::sync::Mutex::new(None)),
                 runner_count: Arc::new(std::sync::atomic::AtomicU32::new(0)),
             });
@@ -90,6 +91,9 @@ pub fn run() {
             commands::cmd_google_drive_ensure_folder,
             commands::cmd_google_drive_backup_telegram_file,
             commands::cmd_connect,
+            commands::cmd_get_accounts,
+            commands::cmd_switch_account,
+            commands::cmd_remove_account,
             commands::cmd_log,
             commands::cmd_delete_file,
             commands::cmd_download_file,

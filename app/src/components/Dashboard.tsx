@@ -145,15 +145,15 @@ const isPlainRecord = (value: unknown): value is Record<string, unknown> => (
     typeof value === 'object' && value !== null && !Array.isArray(value)
 );
 
-export function Dashboard({ onLogout }: { onLogout: () => void }) {
+export function Dashboard({ onLogout, onAddAccount }: { onLogout: () => void; onAddAccount: () => void }) {
     const queryClient = useQueryClient();
     const { t } = useLanguage();
     const { confirm } = useConfirm();
 
 
     const {
-        store, folders, activeFolderId, setActiveFolderId, isSyncing, isConnected,
-        handleLogout, handleSyncFolders, handleCreateFolder, handleFolderDelete, handleFolderRename
+        store, folders, activeFolderId, setActiveFolderId, accounts, activeAccountId, isSyncing, isConnected,
+        handleLogout, handleSyncFolders, handleCreateFolder, handleFolderDelete, handleFolderRename, switchAccount, removeAccount
     } = useTelegramConnection(onLogout);
 
     const [activeView, setActiveView] = useState<WorkspaceView>('files');
@@ -191,23 +191,39 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
     const [previewContextIndex, setPreviewContextIndex] = useState(-1);
 
     useEffect(() => {
-        if (store) {
-            store.get<'grid' | 'list'>('viewMode').then((saved) => {
-                if (saved) setViewMode(saved);
-            });
-            Promise.all([
-                store.get<Record<string, FileMetaRecord>>('fileMeta'),
-                store.get<RecentItem[]>('recentItems'),
-                store.get<ActivityLogItem[]>('activityLog'),
-                store.get<GoogleDriveSettings>('googleDriveSettings')
-            ]).then(([savedMeta, savedRecent, savedActivity, savedGoogleDrive]) => {
-                if (savedMeta) setFileMeta(savedMeta);
-                if (savedRecent) setRecentItems(savedRecent.slice(0, 80));
-                if (savedActivity) setActivityLog(savedActivity.slice(0, 240));
-                if (savedGoogleDrive) setGoogleDriveSettings({ ...DEFAULT_GOOGLE_DRIVE_SETTINGS, ...savedGoogleDrive });
-                setMetadataLoaded(true);
-            });
-        }
+        if (!store) return;
+
+        let cancelled = false;
+        setMetadataLoaded(false);
+        setFirstRunChecked(false);
+        setSelectedIds([]);
+        setSearchTerm("");
+        setSearchResults([]);
+        setFileMeta({});
+        setRecentItems([]);
+        setActivityLog([]);
+        setGoogleDriveSettings(DEFAULT_GOOGLE_DRIVE_SETTINGS);
+
+        store.get<'grid' | 'list'>('viewMode').then((saved) => {
+            if (!cancelled && saved) setViewMode(saved);
+        });
+        Promise.all([
+            store.get<Record<string, FileMetaRecord>>('fileMeta'),
+            store.get<RecentItem[]>('recentItems'),
+            store.get<ActivityLogItem[]>('activityLog'),
+            store.get<GoogleDriveSettings>('googleDriveSettings')
+        ]).then(([savedMeta, savedRecent, savedActivity, savedGoogleDrive]) => {
+            if (cancelled) return;
+            if (savedMeta) setFileMeta(savedMeta);
+            if (savedRecent) setRecentItems(savedRecent.slice(0, 80));
+            if (savedActivity) setActivityLog(savedActivity.slice(0, 240));
+            if (savedGoogleDrive) setGoogleDriveSettings({ ...DEFAULT_GOOGLE_DRIVE_SETTINGS, ...savedGoogleDrive });
+            setMetadataLoaded(true);
+        });
+
+        return () => {
+            cancelled = true;
+        };
     }, [store]);
 
     useEffect(() => {
@@ -249,7 +265,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
 
 
     const { data: allFiles = [], isLoading, error } = useQuery({
-        queryKey: ['files', activeFolderId],
+        queryKey: ['files', activeAccountId, activeFolderId],
         queryFn: () => invoke<any[]>('cmd_get_files', { folderId: activeFolderId }).then(res => res.map(f => normalizeFile(f, activeFolderId))),
         enabled: !!store,
     });
@@ -413,7 +429,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
     });
 
     const { data: currentUser = null } = useQuery({
-        queryKey: ['current-user'],
+        queryKey: ['current-user', activeAccountId],
         queryFn: () => invoke<TelegramAccountProfile | null>('cmd_get_current_user').catch(() => null),
         enabled: !!store && isConnected,
         staleTime: 5 * 60 * 1000,
@@ -626,7 +642,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
         await handleFolderRename(folderId, name);
         recordActivity('folder', t('activity.label.folderRename'), name);
         if (activeFolderId === folderId) {
-            queryClient.invalidateQueries({ queryKey: ['files', folderId] });
+            queryClient.invalidateQueries({ queryKey: ['files'] });
         }
     }, [activeFolderId, handleFolderRename, queryClient, recordActivity, t]);
 
@@ -911,7 +927,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
                     targetFolderId: targetFolderId
                 });
 
-                queryClient.invalidateQueries({ queryKey: ['files', sourceFolderId] });
+                queryClient.invalidateQueries({ queryKey: ['files'] });
 
                 if (selectedIds.includes(fileId)) setSelectedIds([]);
 
@@ -1010,7 +1026,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
                 content: JSON.stringify(snapshot, null, 2),
                 folderId,
             });
-            queryClient.invalidateQueries({ queryKey: ['files', folderId] });
+            queryClient.invalidateQueries({ queryKey: ['files'] });
             recordActivity('backup', t('activity.label.backup'), `${result.filename} -> ${getFolderName(folderId)}`);
             toast.success(t('backup.created'));
         } catch (error) {
@@ -1361,8 +1377,13 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
                 isConnected={isConnected}
                 onSync={handleSyncFolders}
                 onLogout={handleLogout}
+                onAddAccount={onAddAccount}
+                onSwitchAccount={switchAccount}
+                onRemoveAccount={removeAccount}
                 bandwidth={bandwidth || null}
                 account={currentUser}
+                accounts={accounts}
+                activeAccountId={activeAccountId}
             />
 
             <main className="flex-1 flex flex-col" onClick={(e) => { if (e.target === e.currentTarget) setSelectedIds([]); }}>

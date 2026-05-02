@@ -1,6 +1,7 @@
 use std::net::TcpStream;
 use std::time::Duration;
 use tauri::Manager;
+use crate::models::AccountListResult;
 
 #[derive(serde::Serialize)]
 pub struct HealthCheckItem {
@@ -54,7 +55,16 @@ pub async fn cmd_health_check(app_handle: tauri::AppHandle) -> Result<HealthRepo
         detail: app_data.to_string_lossy().to_string(),
     });
 
-    let session_path = app_data.join("telegram.session");
+    let active_account_id = std::fs::read_to_string(app_data.join("telegram-accounts.json"))
+        .ok()
+        .and_then(|content| serde_json::from_str::<AccountListResult>(&content).ok())
+        .and_then(|registry| registry.active_account_id)
+        .unwrap_or_else(|| "legacy".to_string());
+    let session_path = if active_account_id == "legacy" {
+        app_data.join("telegram.session")
+    } else {
+        app_data.join("accounts").join(format!("{}.session", active_account_id))
+    };
     checks.push(HealthCheckItem {
         key: "session".to_string(),
         label: "Telegram session".to_string(),

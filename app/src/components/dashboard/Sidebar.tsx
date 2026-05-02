@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Activity, AtSign, BarChart3, Cloud, Clock3, DatabaseBackup, Film, HardDrive, Folder, History, Phone, Plus, RefreshCw, LogOut, Star, Tag, Tags, Trash2, UserRound } from 'lucide-react';
+import { Activity, AtSign, BarChart3, Check, ChevronDown, Cloud, Clock3, DatabaseBackup, Film, HardDrive, Folder, History, Phone, Plus, RefreshCw, LogOut, Star, Tag, Tags, Trash2, UserPlus, UserRound, X } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { BandwidthWidget } from './BandwidthWidget';
-import { TelegramAccountProfile, TelegramFolder, BandwidthStats, WorkspaceView } from '../../types';
+import { SavedTelegramAccount, TelegramAccountProfile, TelegramFolder, BandwidthStats, WorkspaceView } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { APP_AUTHOR, APP_VERSION } from '../../version';
 
@@ -23,20 +23,29 @@ interface SidebarProps {
     isConnected: boolean;
     onSync: () => void;
     onLogout: () => void;
+    onAddAccount: () => void;
+    onSwitchAccount: (accountId: string) => void;
+    onRemoveAccount: (accountId: string) => void;
     bandwidth: BandwidthStats | null;
     account: TelegramAccountProfile | null;
+    accounts: SavedTelegramAccount[];
+    activeAccountId: string | null;
 }
 
 export function Sidebar({
     folders, activeFolderId, activeView, collectionTags, activeCollectionTag, setActiveFolderId, setActiveView, setActiveCollectionTag, onDrop, onDelete, onRename, onCreate,
-    isSyncing, isConnected, onSync, onLogout, bandwidth, account
+    isSyncing, isConnected, onSync, onLogout, onAddAccount, onSwitchAccount, onRemoveAccount, bandwidth, account, accounts, activeAccountId
 }: SidebarProps) {
     const { t } = useLanguage();
     const [showNewFolderInput, setShowNewFolderInput] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
-    const accountName = account?.full_name?.trim() || account?.username || account?.phone || t('sidebar.account');
-    const accountUsername = account?.username ? `@${account.username}` : null;
-    const accountPhone = account?.phone ? (account.phone.startsWith('+') ? account.phone : `+${account.phone}`) : null;
+    const [showAccountMenu, setShowAccountMenu] = useState(false);
+    const activeSavedAccount = accounts.find(item => item.account_id === activeAccountId);
+    const accountName = account?.full_name?.trim() || activeSavedAccount?.full_name?.trim() || account?.username || activeSavedAccount?.username || account?.phone || activeSavedAccount?.phone || t('sidebar.account');
+    const accountUsernameValue = account?.username || activeSavedAccount?.username;
+    const accountPhoneValue = account?.phone || activeSavedAccount?.phone;
+    const accountUsername = accountUsernameValue ? `@${accountUsernameValue}` : null;
+    const accountPhone = accountPhoneValue ? (accountPhoneValue.startsWith('+') ? accountPhoneValue : `+${accountPhoneValue}`) : null;
 
     const submitCreate = async () => {
         if (!newFolderName.trim()) return;
@@ -242,15 +251,79 @@ export function Sidebar({
             </div>
 
             <div className="pt-3 px-1">
-                <div className="mb-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-3">
-                    <div className="flex items-start gap-3">
+                <div className="relative mb-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-3">
+                    {showAccountMenu && (
+                        <div className="absolute left-0 right-0 bottom-full mb-2 rounded-lg border border-white/10 bg-[#151d1a] shadow-2xl z-30 overflow-hidden">
+                            <div className="px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-white/40 border-b border-white/10">
+                                {t('sidebar.savedAccounts')}
+                            </div>
+                            <div className="max-h-56 overflow-y-auto custom-scrollbar p-1">
+                                {accounts.length === 0 ? (
+                                    <div className="px-3 py-3 text-xs text-white/45">{t('sidebar.accountLoading')}</div>
+                                ) : accounts.map(savedAccount => {
+                                    const savedName = savedAccount.full_name?.trim() || savedAccount.username || savedAccount.phone || t('sidebar.account');
+                                    const savedPhone = savedAccount.phone ? (savedAccount.phone.startsWith('+') ? savedAccount.phone : `+${savedAccount.phone}`) : null;
+                                    const isActive = savedAccount.account_id === activeAccountId;
+                                    return (
+                                        <div key={savedAccount.account_id} className="flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowAccountMenu(false);
+                                                    onSwitchAccount(savedAccount.account_id);
+                                                }}
+                                                className="min-w-0 flex-1 flex items-center gap-2 px-2 py-2 rounded-md hover:bg-white/10 text-left transition-colors"
+                                            >
+                                                <div className="w-7 h-7 rounded-md bg-telegram-primary/15 border border-telegram-primary/20 flex items-center justify-center shrink-0">
+                                                    <UserRound className="w-3.5 h-3.5 text-telegram-primary" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-xs font-semibold text-white truncate">{savedName}</div>
+                                                    <div className="text-[10px] text-white/45 truncate">
+                                                        {savedAccount.username ? `@${savedAccount.username}` : savedPhone || t('sidebar.account')}
+                                                    </div>
+                                                </div>
+                                                {isActive && <Check className="w-3.5 h-3.5 text-telegram-primary shrink-0" />}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => onRemoveAccount(savedAccount.account_id)}
+                                                className="p-2 rounded-md text-white/35 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                                                title={t('sidebar.removeAccount')}
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowAccountMenu(false);
+                                    onAddAccount();
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-telegram-primary hover:bg-telegram-primary/10 border-t border-white/10 transition-colors"
+                            >
+                                <UserPlus className="w-3.5 h-3.5" />
+                                {t('sidebar.addAccount')}
+                            </button>
+                        </div>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={() => setShowAccountMenu(value => !value)}
+                        className="w-full flex items-start gap-3 text-left"
+                        title={t('sidebar.switchAccount')}
+                    >
                         <div className="w-8 h-8 rounded-lg bg-telegram-primary/15 border border-telegram-primary/25 flex items-center justify-center shrink-0">
                             <UserRound className="w-4 h-4 text-telegram-primary" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                             <p className="text-[10px] uppercase tracking-[0.16em] text-white/40 mb-1">{t('sidebar.account')}</p>
                             <p className="text-sm font-semibold text-white truncate" title={accountName}>{accountName}</p>
-                            {account ? (
+                            {account || activeSavedAccount ? (
                                 <div className="mt-1 flex flex-col gap-0.5 text-[11px] text-white/55">
                                     {accountUsername && (
                                         <span className="flex items-center gap-1 truncate" title={accountUsername}>
@@ -269,7 +342,8 @@ export function Sidebar({
                                 <p className="text-[11px] text-white/45 mt-1">{t('sidebar.accountLoading')}</p>
                             )}
                         </div>
-                    </div>
+                        <ChevronDown className={`w-4 h-4 mt-1 text-white/40 transition-transform ${showAccountMenu ? 'rotate-180' : ''}`} />
+                    </button>
                 </div>
 
                 <div className="flex items-center gap-2 text-white/55 text-xs px-2">

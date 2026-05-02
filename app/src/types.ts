@@ -23,10 +23,25 @@ export interface TelegramFolder {
 }
 
 export interface TelegramAccountProfile {
+    account_id?: string | null;
     id: number;
     full_name: string;
     username?: string | null;
     phone?: string | null;
+}
+
+export interface SavedTelegramAccount {
+    account_id: string;
+    telegram_id: number;
+    full_name: string;
+    username?: string | null;
+    phone?: string | null;
+    last_active_at: string;
+}
+
+export interface AccountListResult {
+    active_account_id?: string | null;
+    accounts: SavedTelegramAccount[];
 }
 
 export interface QueueItem {

@@ -3,7 +3,7 @@
 YonexAnh Telegram Drive is a personal desktop app that turns your Telegram account into a practical cloud-drive workspace. It uses Telegram Saved Messages and private Telegram channels as storage locations, then adds a native file-manager experience on top with folders, previews, streaming, transfers, search, sync, and account-aware UI.
 
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue)
-![Version](https://img.shields.io/badge/version-1.1.9-2dd4bf)
+![Version](https://img.shields.io/badge/version-1.2.0-2dd4bf)
 ![Tauri](https://img.shields.io/badge/Tauri-2.x-24C8DB)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 
@@ -19,6 +19,7 @@ The app connects directly to Telegram through your own API credentials. Credenti
 
 - **English / Vietnamese UI**: switch between EN and VN from the login screen or dashboard.
 - **Logged-in account display**: the sidebar can show the Telegram name, username, and phone number returned by Telegram for the current session.
+- **Multi-account switcher**: add multiple Telegram accounts, keep separate local sessions, and switch accounts quickly from the sidebar.
 - **New app logo and icon set**: refreshed Telegram-like paper-plane drive identity across the UI and generated app icons.
 - **Automatic session restore**: the app checks existing local Telegram sessions on launch and opens the dashboard when possible.
 - **Real drag and drop upload**: file drops from the desktop are queued into the active Telegram folder.
@@ -40,6 +41,7 @@ The app connects directly to Telegram through your own API credentials. Credenti
 ## Core Features
 
 - **Saved Messages as Home**: use your own Telegram Saved Messages as the root drive.
+- **Multiple Telegram Accounts**: keep several logged-in Telegram sessions on the same device and move between them from the account switcher.
 - **Folders via Telegram Channels**: create private Telegram channels and manage them like folders.
 - **Grid and List Views**: switch between visual cards and dense list view.
 - **Virtualized Large Folders**: handle large folders without rendering every row at once.
@@ -59,7 +61,7 @@ The app connects directly to Telegram through your own API credentials. Credenti
 
 ## Screenshots
 
-Screenshots are captured from v1.1.9 with demo files for documentation.
+Screenshots are captured from v1.2.0 with demo files for documentation.
 
 <table>
   <tr>
@@ -298,7 +300,7 @@ npx --no-install tauri icon public/logo.svg
 ## Privacy And Limits
 
 - Files are uploaded to Telegram using your logged-in Telegram account.
-- API credentials and session data are stored locally.
+- API credentials and Telegram session data are stored locally. When multiple accounts are added, each account uses its own local session file.
 - Local metadata such as favorites, tags, trash state, rename labels, sync settings, and recent history is stored on your machine.
 - This app does not provide extra Telegram storage beyond Telegram's own account and file-size limits.
 - Use the app responsibly and follow Telegram's Terms of Service.

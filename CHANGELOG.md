@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0] - 2026-05-02
+
+### Added
+
+- Added a Telegram multi-account switcher. The app now keeps separate local session files per saved account, supports adding another account from the sidebar, and can switch/remove saved accounts without deleting Telegram files.
+- Moved workspace state into account-specific stores so folders, tags, queues, local sync settings, Google Drive settings, and activity history stay separated per Telegram account.
+
+---
+
 ## [1.1.6] - 2026-04-28
 
 ### Fix

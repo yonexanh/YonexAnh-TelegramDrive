@@ -18,10 +18,27 @@ pub struct AuthResult {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountProfile {
+    pub account_id: Option<String>,
     pub id: i64,
     pub full_name: String,
     pub username: Option<String>,
     pub phone: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SavedTelegramAccount {
+    pub account_id: String,
+    pub telegram_id: i64,
+    pub full_name: String,
+    pub username: Option<String>,
+    pub phone: Option<String>,
+    pub last_active_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct AccountListResult {
+    pub active_account_id: Option<String>,
+    pub accounts: Vec<SavedTelegramAccount>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
