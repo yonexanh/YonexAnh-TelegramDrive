@@ -3,7 +3,7 @@
 CloneYA Telegram Drive is a personal desktop app that turns your Telegram account into a practical cloud-drive workspace. It uses Telegram Saved Messages and private Telegram channels as storage locations, then adds a native file-manager experience on top with folders, previews, streaming, transfers, search, sync, and account-aware UI.
 
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue)
-![Version](https://img.shields.io/badge/version-1.1.8-2dd4bf)
+![Version](https://img.shields.io/badge/version-1.1.9-2dd4bf)
 ![Tauri](https://img.shields.io/badge/Tauri-2.x-24C8DB)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 
