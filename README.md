@@ -59,21 +59,29 @@ The app connects directly to Telegram through your own API credentials. Credenti
 
 ## Screenshots
 
-| Dashboard | File Preview |
-| --- | --- |
-| ![Dashboard](screenshots/DashboardWithFiles.png) | ![Preview](screenshots/ImagePreview.png) |
+Screenshots are captured from v1.1.9 with demo files for documentation.
 
-| Grid View | Authentication |
-| --- | --- |
-| ![Grid View](screenshots/DarkModeGrid.png) | ![Login](screenshots/LoginScreen.png) |
-
-| Audio Playback | Video Playback |
-| --- | --- |
-| ![Audio Playback](screenshots/AudioPlayback.png) | ![Video Playback](screenshots/VideoPlayback.png) |
-
-| Folder Creation | Upload Example |
-| --- | --- |
-| ![Folder Creation](screenshots/FolderCreation.png) | ![Upload Example](screenshots/UploadExample.png) |
+<table>
+  <tr>
+    <td><strong>Dashboard</strong><br><img src="screenshots/Dashboard.png" alt="Dashboard"></td>
+    <td><strong>Tag Search</strong><br><img src="screenshots/TagSearch.png" alt="Tag Search"></td>
+  </tr>
+  <tr>
+    <td><strong>Google Drive Setup</strong><br><img src="screenshots/GoogleDriveSetup.png" alt="Google Drive Setup"></td>
+    <td><strong>Metadata Backup</strong><br><img src="screenshots/BackupRestore.png" alt="Metadata Backup"></td>
+  </tr>
+  <tr>
+    <td><strong>Tag Manager</strong><br><img src="screenshots/TagManager.png" alt="Tag Manager"></td>
+    <td><strong>Storage Analytics</strong><br><img src="screenshots/StorageAnalytics.png" alt="Storage Analytics"></td>
+  </tr>
+  <tr>
+    <td><strong>Activity Log</strong><br><img src="screenshots/ActivityLog.png" alt="Activity Log"></td>
+    <td><strong>Image Preview</strong><br><img src="screenshots/ImagePreviewNew.png" alt="Image Preview"></td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Authentication</strong><br><img src="screenshots/Login.png" alt="Authentication"></td>
+  </tr>
+</table>
 
 ## Tech Stack
 
